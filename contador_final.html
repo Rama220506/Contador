@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Contador de Números</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      padding: 30px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+    }
+    #output {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #007acc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Contador de 4 dígitos</h1>
+  <p>Ingresá un rango (entre 0000 y 9999) para bloquearlo:</p>
+  <input type="number" id="desde" placeholder="Desde (ej. 0000)" min="0" max="9999">
+  <input type="number" id="hasta" placeholder="Hasta (ej. 9999)" min="0" max="9999">
+  <button onclick="bloquearRango()">Bloquear Rango</button>
+
+  <div id="output">Número actual: <span id="numero"></span></div>
+  <button onclick="siguienteNumero()">Siguiente número</button>
+  <button onclick="reiniciarTodo()" style="background-color: red; color: white;">Reiniciar Todo</button>
+
+  <script>
+    let numeroActual = 0;
+    let rangosBloqueados = JSON.parse(localStorage.getItem("rangos")) || [];
+
+    function bloquearRango() {
+      let desde = parseInt(document.getElementById("desde").value);
+      let hasta = parseInt(document.getElementById("hasta").value);
+      if (isNaN(desde) || isNaN(hasta) || desde < 0 || hasta > 9999 || desde > hasta) {
+        alert("Rango inválido");
+        return;
+      }
+      rangosBloqueados.push([desde, hasta]);
+      localStorage.setItem("rangos", JSON.stringify(rangosBloqueados));
+
+      let nuevoInicio = hasta + 1;
+      if (nuevoInicio > 9999) nuevoInicio = 10000;
+      localStorage.setItem("numeroActual", nuevoInicio);
+
+      actualizarNumero();
+    }
+
+    function estaBloqueado(n) {
+      return rangosBloqueados.some(r => n >= r[0] && n <= r[1]);
+    }
+
+    function actualizarNumero() {
+      numeroActual = parseInt(localStorage.getItem("numeroActual")) || 0;
+      while (estaBloqueado(numeroActual)) {
+        numeroActual++;
+        if (numeroActual > 9999) {
+          document.getElementById("numero").textContent = "¡Todos los números fueron usados!";
+          return;
+        }
+      }
+      document.getElementById("numero").textContent = numeroActual.toString().padStart(4, '0');
+      localStorage.setItem("numeroActual", numeroActual);
+    }
+
+    function siguienteNumero() {
+      numeroActual++;
+      localStorage.setItem("numeroActual", numeroActual);
+      actualizarNumero();
+    }
+
+    function reiniciarTodo() {
+      if (confirm("¿Estás seguro de que querés reiniciar todo?")) {
+        localStorage.removeItem("numeroActual");
+        localStorage.removeItem("rangos");
+        rangosBloqueados = [];
+        numeroActual = 0;
+        actualizarNumero();
+      }
+    }
+
+    actualizarNumero();
+  </script>
+</body>
+</html>
